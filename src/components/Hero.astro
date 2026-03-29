@@ -45,11 +45,11 @@
   .hero {
     display: flex;
     flex-direction: column;
+    justify-content: space-between;
     align-items: center;
-    gap: 40px;
     height: calc(100svh - 38px);
     max-height: calc(100vh - 38px);
-    padding: 80px 0 12px;
+    padding: 42px 0 12px;
     width: 100%;
   }
 
@@ -57,13 +57,11 @@
     text-align: center;
   }
 
-
-
   .hero-name {
     display: flex;
     justify-content: center;
     align-items: center;
-    width: min(486px, 70vw);
+    width: 486px;
     flex-shrink: 0;
   }
 
@@ -78,7 +76,6 @@
 
   .hero-divider {
     width: 100%;
-    margin-top: auto;
   }
 
   .hero-divider img {
@@ -86,14 +83,22 @@
     height: auto;
   }
 
-  @media (max-width: 640px) {
+  /* Tablet */
+  @media (max-width: 1024px) {
+    .hero-name {
+      width: min(486px, 70vw);
+    }
+  }
+
+  /* Mobile */
+  @media (max-width: 810px) {
     .hero {
-      padding: 60px 0 12px;
+      height: calc(80svh - 38px);
+      max-height: calc(80vh - 38px);
     }
 
     .hero-name {
-      width: min(320px, 80vw);
+      width: 240px;
     }
-
   }
 </style>
