@@ -1,0 +1,184 @@
+---
+const socialLinks = [
+  { name: "LinkedIn", url: "#" },
+  { name: "Instagram", url: "#" },
+  { name: "TikTok", url: "#" },
+  { name: "Are.na", url: "#" },
+  { name: "Newsletter", url: "#" },
+  { name: "Last.fm", url: "#" },
+];
+
+const storyCol1 = [
+  `I'm a 6'2" bastard born in 1997.  Post-soviet, European mental breakdown era, gray blocks of flats, terrible roads, and a river nobody swam in. My\u00A0old man was a truck driver, my granddad was a truck driver, my great-granddad too - you get the drill. A\u00A0whole bloodline of gas and loud pipes. Somehow, I put my hands to another line of work (but my heart will always be behind the wheel, iykyk).`,
+  `I wasn't the most extroverted kid on the block. Glued to a screen, wasting daylight in Los Santos, racking up hours in MMORPGs, countless FIFA tournaments, customizing dream cars in Need for Speed Underground 2, shooting russkies in Counter Strike. I\u00A0just liked having my own world and grind games.`,
+  `I grew up hanging around auto shops with my old man, watching wall calendars with naked hookers printed on. That's where I fell in love with cars \u2013 the bigger, louder, Redneck-er, the better. Cadillacs, Mustangs, Chevys. Anything with pipes loud enough to scare the shit out of passing grannies. My\u00A0father is a\u00A0Harley Davidson guy, and he definitely passed that to me. Today, I ride a 2015 Dyna Fat Bob \u2013 this shit just makes you feel like the highway and the world belongs to you.`,
+  `Proud European on the outside, wanna-be hillbilly deep\u00A0inside.`,
+];
+
+const storyCol2 = [
+  `Somehow, against all odds, I stumbled into design. Enrolled at SWPS University for Visual Communication Design. With\u00A0all\u00A0the hard work - I crushed it, graduated with honors. That got me into Uniforma Studio. A place that taught me the craft for real. Ain't\u00A0easy, but was worth it.`,
+  `From there, I pivoted multiple times \u2013 UI\u00A0design, web design, no-code builds.`,
+  `Eventually, I landed at tonik.com. Startups, chaos, blood and sweat, shipping sth every day. Started as a\u00A0Webflow developer, two years later became Head of Web Design.`,
+  `It's a fun ride, but my heart was always closer to the non-commercial, experimental, small weird projects. Beauty isn't clean but crooked and unapologetic.`,
+  `Currently, majority of my work is done for US\u00A0startups \u2013 the founders backed by YCombinator, a16z, Sequoia, hf0. The\u00A0Bay\u00A0calls, and I answer.`,
+  `Now, at 28, I'm a fullstack design engineer on the verge of tech and design, but it was always about design. Btw I wrote the whole text on my own so don't you dare accusing me of blasting a gpt-generated slop you mf.`,
+];
+---
+
+<section class="bio">
+  <!-- Col 1: Name + Roles -->
+  <div class="bio-col">
+    <div class="bio-label">Emil Tybura</div>
+    <div class="bio-content bio-roles">
+      <div>Art Director</div>
+      <div>Creative Director</div>
+      <div>Web Designer</div>
+      <div>Brand Designer</div>
+      <div>Design Engineer</div>
+      <div>Lecturer</div>
+      <div>Advisor</div>
+    </div>
+  </div>
+
+  <!-- Col 2: Title + Links -->
+  <div class="bio-col">
+    <div class="bio-label">Graphic Designer, Age: 28</div>
+    <div class="bio-content bio-links">
+      {
+        socialLinks.map((link, i) => (
+          <>
+            <a href={link.url} class="bio-social-link">
+              {link.name}
+            </a>
+            {i === 2 && <div class="bio-links-spacer" />}
+          </>
+        ))
+      }
+    </div>
+  </div>
+
+  <!-- Col 3: Story part 1 -->
+  <div class="bio-col bio-col--story">
+    <div class="bio-story">
+      {
+        storyCol1.map((text, i) => (
+          <>
+            <p>{text}</p>
+            {i < storyCol1.length - 1 && <div class="bio-spacer" />}
+          </>
+        ))
+      }
+    </div>
+  </div>
+
+  <!-- Col 4: Story part 2 -->
+  <div class="bio-col bio-col--story">
+    <div class="bio-story">
+      {
+        storyCol2.map((text, i) => (
+          <>
+            <p>{text}</p>
+            {i < storyCol2.length - 1 && <div class="bio-spacer" />}
+          </>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .bio {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--gap);
+    padding: 24px 0;
+    width: 100%;
+  }
+
+  /* ---- columns ---- */
+  .bio-col {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-width: 0;
+  }
+
+  .bio-label {
+    padding-bottom: 24px;
+    text-align: left;
+  }
+
+  .bio-content {
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+  }
+
+  /* ---- roles (vertical stack) ---- */
+  .bio-roles {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .bio-roles div {
+    display: block;
+  }
+
+  /* ---- links ---- */
+  .bio-links {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .bio-social-link {
+    width: fit-content;
+  }
+
+  .bio-links-spacer {
+    height: 14px;
+  }
+
+  /* ---- story columns ---- */
+  .bio-col--story {
+    justify-content: flex-start;
+  }
+
+  .bio-story {
+    max-width: 320px;
+  }
+
+  .bio-col--story p {
+    text-align: left;
+    text-wrap: pretty;
+  }
+
+  .bio-spacer {
+    height: 14px;
+  }
+
+  /* ---- responsive ---- */
+  @media (max-width: 1024px) {
+    .bio {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .bio-story {
+      max-width: none;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .bio {
+      grid-template-columns: 1fr;
+      gap: 24px;
+    }
+
+    .bio-label {
+      padding-bottom: 0;
+    }
+
+    .bio-col {
+      gap: 14px;
+    }
+  }
+</style>

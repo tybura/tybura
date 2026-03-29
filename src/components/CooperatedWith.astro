@@ -1,0 +1,140 @@
+---
+import { getCollection } from "astro:content";
+
+const entries = await getCollection("projects");
+const projects = entries[0]?.data.projects ?? [];
+---
+
+<section class="cooperated">
+  <div class="cooperated-header">
+    <span class="cooperated-label">Cooperated with</span>
+    <span class="cooperated-label cooperated-label--right"
+      >Cooperated with</span
+    >
+  </div>
+
+  {
+    projects.map((project) => (
+      <div class="project-row">
+        <span class="project-cell project-name">{project.name}</span>
+        <span class="project-cell project-type">{project.type}</span>
+        <span class="project-cell project-location">
+          {project.location}
+        </span>
+        <div class="project-cell project-meta">
+          <span class="project-year">{project.year}</span>
+          {project.url ? (
+            <a
+              href={project.url}
+              target="_blank"
+              rel="noopener"
+              class="project-status"
+            >
+              {project.status}
+            </a>
+          ) : (
+            <span class="project-status">{project.status}</span>
+          )}
+        </div>
+      </div>
+    ))
+  }
+</section>
+
+<style>
+  .cooperated {
+    display: flex;
+    flex-direction: column;
+    padding: 24px 0;
+    width: 100%;
+  }
+
+  /* ---- header ---- */
+  .cooperated-header {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--gap);
+    padding-bottom: 12px;
+  }
+
+  .cooperated-label {
+    grid-column: 1;
+    text-align: left;
+  }
+
+  .cooperated-label--right {
+    grid-column: 4;
+    text-align: right;
+  }
+
+  /* ---- rows ---- */
+  .project-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--gap);
+    align-items: center;
+    height: 38px;
+    border-top: 1px solid var(--color-text);
+  }
+
+  .project-cell {
+    text-align: left;
+  }
+
+  .project-name {
+    grid-column: 1;
+  }
+  .project-type {
+    grid-column: 2;
+  }
+  .project-location {
+    grid-column: 3;
+  }
+  .project-meta {
+    grid-column: 4;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  /* ---- responsive ---- */
+  @media (max-width: 768px) {
+    .cooperated-header,
+    .project-row {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .cooperated-label--right {
+      grid-column: 2;
+    }
+
+    .project-name {
+      grid-column: 1;
+      grid-row: 1;
+    }
+
+    .project-type,
+    .project-location {
+      display: none;
+    }
+
+    .project-meta {
+      grid-column: 2;
+      grid-row: 1;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .cooperated-label--right {
+      display: none;
+    }
+
+    .project-year {
+      display: none;
+    }
+
+    .project-meta {
+      justify-content: flex-end;
+    }
+  }
+</style>

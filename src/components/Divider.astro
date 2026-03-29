@@ -1,0 +1,25 @@
+---
+interface Props {
+  src: string;
+  alt?: string;
+}
+
+const { src, alt = "" } = Astro.props;
+---
+
+<div class="divider">
+  <img src={src} alt={alt} loading="lazy" />
+</div>
+
+<style>
+  .divider {
+    width: 100%;
+    padding: 0;
+  }
+
+  .divider img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+</style>

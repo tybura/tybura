@@ -1,0 +1,99 @@
+---
+---
+
+<section class="hero">
+  <div class="hero-roles">
+    <p>
+      Head of Web Design at&nbsp;<a href="https://tonik.com" class="role-link"
+        >tonik</a
+      ><br />
+      Co-founder at&nbsp;<a href="#" class="role-link">SLINA</a><br />
+      Co-founder at&nbsp;<a href="#" class="role-link">Dziwne Wody</a>
+    </p>
+  </div>
+
+  <div class="hero-name">
+    <img
+      src="/images/name-svg.png"
+      alt="tybura"
+      width="486"
+      height="194"
+      loading="eager"
+    />
+  </div>
+
+  <div class="hero-tagline">
+    <p>
+      Award-winning designer, storyteller, thinker.<br />
+      Over 8 years of experience in transforming<br />
+      brands, websites and startups.<br />
+      Cooperated with a16z, YCombinator, Sequoia.
+    </p>
+  </div>
+
+  <div class="hero-divider">
+    <img
+      src="/images/divider-bottom.png"
+      alt=""
+      width="1416"
+      loading="eager"
+    />
+  </div>
+</section>
+
+<style>
+  .hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 40px;
+    height: calc(100svh - 38px);
+    max-height: calc(100vh - 38px);
+    padding: 80px 0 12px;
+    width: 100%;
+  }
+
+  .hero-roles {
+    text-align: center;
+  }
+
+
+
+  .hero-name {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: min(486px, 70vw);
+    flex-shrink: 0;
+  }
+
+  .hero-name img {
+    width: 100%;
+    height: auto;
+  }
+
+  .hero-tagline {
+    text-align: center;
+  }
+
+  .hero-divider {
+    width: 100%;
+    margin-top: auto;
+  }
+
+  .hero-divider img {
+    width: 100%;
+    height: auto;
+  }
+
+  @media (max-width: 640px) {
+    .hero {
+      padding: 60px 0 12px;
+    }
+
+    .hero-name {
+      width: min(320px, 80vw);
+    }
+
+  }
+</style>

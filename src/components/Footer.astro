@@ -1,0 +1,88 @@
+---
+---
+
+<footer class="footer">
+  <div class="footer-border"></div>
+
+  <!-- Col 1: contact -->
+  <div class="footer-col footer-col--contact">
+    <p>Open for new collaborations.</p>
+    <p class="footer-email">
+      <span>All inquiries: </span>
+      <a href="mailto:emil@tybura.com" class="footer-link">emil@tybura.com</a>
+    </p>
+  </div>
+
+  <!-- Col 2: empty (spacer) -->
+  <div class="footer-col footer-col--spacer"></div>
+
+  <!-- Col 3: last update -->
+  <div class="footer-col">
+    <p>Last update:</p>
+    <p>March 30, 2026</p>
+  </div>
+
+  <!-- Col 4: type set -->
+  <div class="footer-col">
+    <p>Type set:</p>
+    <p>Overused Grotesk, RandomMaerks</p>
+  </div>
+</footer>
+
+<style>
+  .footer {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--gap);
+    padding: var(--content-padding);
+    width: 100%;
+  }
+
+  .footer-border {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background-color: var(--color-text);
+  }
+
+  .footer-col {
+    min-width: 0;
+  }
+
+  .footer-col p {
+    text-align: left;
+  }
+
+  .footer-col--spacer {
+    /* intentionally empty — holds the grid slot */
+  }
+
+  .footer-email {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.3em;
+  }
+
+  .footer-link {
+  }
+
+  @media (max-width: 768px) {
+    .footer {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .footer-col--spacer {
+      display: none;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .footer {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

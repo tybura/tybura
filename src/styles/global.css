@@ -1,0 +1,67 @@
+@font-face {
+  font-family: "Overused Grotesk";
+  src: url("https://cdn.jsdelivr.net/gh/nicoh/overused-grotesk-webfont@latest/fonts/OverusedGrotesk-SemiBold.woff2")
+    format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --color-bg: #434035;
+  --color-text: #c6c0aa;
+  --color-white: #ffffff;
+  --color-accent: #d6c9a9;
+
+  --font-family: "Overused Grotesk", "Monument Grotesk", system-ui, sans-serif;
+  --font-size: 13.3px;
+  --font-weight: 600;
+  --line-height: 1.0526em;
+  --letter-spacing: -0.05em;
+
+  --content-padding: 12px;
+  --gap: 12px;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  font-family: var(--font-family);
+  font-size: var(--font-size);
+  font-weight: var(--font-weight);
+  line-height: var(--line-height);
+  letter-spacing: var(--letter-spacing);
+  color: var(--color-text);
+  background-color: var(--color-bg);
+  overflow-x: hidden;
+  min-width: 320px;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.2s ease;
+}
+
+a:hover {
+  border-bottom-color: var(--color-text);
+}
+
+img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
