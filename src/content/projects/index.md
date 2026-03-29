@@ -1,7 +1,13 @@
 ---
 projects:
-  - name: Belong
-    type: FanTech
+  - name: Hammock
+    type: HealthTech
+    location: United States
+    year: "2026"
+    status: WIP
+  
+  - name: Modern Industrials
+    type: Logistics
     location: United States
     year: "2026"
     status: WIP
