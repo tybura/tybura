@@ -19,3 +19,6 @@ dist/
 
 # debug
 npm-debug.log*
+
+# project context (local only)
+CLAUDE.md
