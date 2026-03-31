@@ -20,6 +20,13 @@ const { title = "tybura\u00AE - multidisciplinary designer, developer and storyt
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>{title}</title>
     <script defer src="https://cloud.umami.is/script.js" data-website-id="624012a1-ebf7-4ac3-ad93-852f63cc5402"></script>
+    <script is:inline async src="https://www.googletagmanager.com/gtag/js?id=G-7KGSVQG4D8"></script>
+    <script is:inline>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-7KGSVQG4D8');
+    </script>
   </head>
   <body>
     <slot />
