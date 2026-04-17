@@ -10,13 +10,15 @@ projects:
     type: Logistics
     location: United States
     year: "2026"
-    status: WIP
+    status: LIVE
+    url: https://www.modernindustrials.com/
 
   - name: Reindustrialist
     type: Magazine
     location: United States
     year: "2026"
-    status: WIP
+    status: LIVE
+    url: https://www.reindustrialist.com/
 
   - name: Ursa Mining
     type: Mining
