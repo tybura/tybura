@@ -17,4 +17,16 @@ const projects = defineCollection({
   }),
 });
 
-export const collections = { projects };
+const junk = defineCollection({
+  loader: glob({ pattern: "*.json", base: "./src/content/junk" }),
+  schema: z.object({
+    title: z.string().default(""),
+    date: z.string(), // ISO date
+    image: z.string(), // /junk/<slug>.webp
+    thumb: z.string(), // /junk/<slug>-thumb.webp
+    width: z.number(),
+    height: z.number(),
+  }),
+});
+
+export const collections = { projects, junk };
