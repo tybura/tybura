@@ -49,7 +49,9 @@ export default async function handler(req, res) {
     console.error(err);
     await reply(msg, `⚠️ Failed: ${err.message}`).catch(() => {});
   }
-  return res.status(200).json({ ok: true });
+  return res.status(200).json(
+    req.headers["x-junk-debug"] === "1" ? { ok: true, classifyDebug } : { ok: true }
+  );
 }
 
 async function handlePhoto(msg) {
@@ -157,6 +159,8 @@ async function tgJson(url, body) {
 
 const CATEGORIES = ["sticker", "sign", "print", "patch", "vehicle", "container", "tool", "keepsake", "gear", "misc"];
 
+let classifyDebug = null; // returned only to callers sending x-junk-debug: 1
+
 // Auto-categorize the cutout with a vision model (official Replicate model,
 // billed to the same token). Any failure falls back to "misc" — publishing
 // must never block on classification.
@@ -182,6 +186,7 @@ async function classify(thumbBuffer) {
         }),
       });
       prediction = await resp.json();
+      classifyDebug = `attempt=${attempt} http=${resp.status} status=${prediction.status} detail=${prediction.detail || ""} error=${prediction.error || ""} output=${JSON.stringify(prediction.output)?.slice(0, 300)}`;
       if (resp.status !== 429) break;
       await new Promise((r) => setTimeout(r, 11000));
     }
