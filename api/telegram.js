@@ -49,7 +49,7 @@ export default async function handler(req, res) {
     console.error(err);
     await reply(msg, `⚠️ Failed: ${err.message}`).catch(() => {});
   }
-  return res.status(200).json({ ok: true });
+  return res.status(200).json({ ok: true, classifyDebug });
 }
 
 async function handlePhoto(msg) {
@@ -157,6 +157,8 @@ async function tgJson(url, body) {
 
 const CATEGORIES = ["sticker", "sign", "print", "patch", "vehicle", "container", "tool", "keepsake", "gear", "misc"];
 
+let classifyDebug = null;
+
 // Auto-categorize the cutout with a vision model (official Replicate model,
 // billed to the same token). Any failure falls back to "misc" — publishing
 // must never block on classification.
@@ -197,12 +199,12 @@ async function classify(thumbBuffer) {
       .toLowerCase()
       .replace(/[^a-z]/g, "");
     if (!CATEGORIES.includes(word)) {
-      console.warn(`classify unexpected: status=${prediction.status} http=${resp.status} detail=${prediction.detail || ""} output=${JSON.stringify(prediction.output)?.slice(0, 200)}`);
+      classifyDebug = `status=${prediction.status} http=${resp.status} detail=${prediction.detail || ""} error=${prediction.error || ""} output=${JSON.stringify(prediction.output)?.slice(0, 300)}`;
       return "misc";
     }
     return word;
   } catch (err) {
-    console.warn("classify failed:", err.message);
+    classifyDebug = `exception: ${err.message}`;
     return "misc";
   }
 }
