@@ -77,6 +77,9 @@ async function handlePhoto(msg) {
   const slug = `${now.toISOString().slice(0, 10).replace(/-/g, "")}-${Math.random().toString(36).slice(2, 6)}`;
   const title = (msg.caption || "").trim();
 
+  const { dominant } = await sharp(image).stats();
+  const color = `#${[dominant.r, dominant.g, dominant.b].map((c) => c.toString(16).padStart(2, "0")).join("")}`;
+
   const meta = {
     title,
     date: now.toISOString(),
@@ -84,6 +87,7 @@ async function handlePhoto(msg) {
     thumb: `/junk/${slug}-thumb.webp`,
     width: info.width,
     height: info.height,
+    color,
   };
 
   await commit(

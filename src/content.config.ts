@@ -26,6 +26,7 @@ const junk = defineCollection({
     thumb: z.string(), // /junk/<slug>-thumb.webp
     width: z.number(),
     height: z.number(),
+    color: z.string().optional(), // dominant color, #rrggbb
   }),
 });
 
