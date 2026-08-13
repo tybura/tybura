@@ -30,8 +30,11 @@ export default async function handler(req, res) {
   const msg = req.body?.message;
   // Always ack with 200 so Telegram doesn't retry; report problems via chat.
   if (!msg) return res.status(200).json({ ok: true });
-  if (String(msg.from?.id) !== String(process.env.ALLOWED_TELEGRAM_USER_ID)) {
-    return res.status(200).json({ ok: true });
+  // Tolerate stray characters in the env var (e.g. "ID: 694774480").
+  const allowedId = String(process.env.ALLOWED_TELEGRAM_USER_ID || "").replace(/\D/g, "");
+  if (!allowedId || String(msg.from?.id) !== allowedId) {
+    console.warn(`Rejected sender ${msg.from?.id} (allowed: ${allowedId || "unset"})`);
+    return res.status(200).json({ ok: true, rejected: true });
   }
 
   try {
