@@ -42,8 +42,10 @@ export default async function handler(req, res) {
       await handleDelete(msg);
     } else if (msg.photo?.length || msg.document?.mime_type?.startsWith("image/")) {
       await handlePhoto(msg);
+    } else if (msg.text?.startsWith("/stats")) {
+      await handleStats(msg);
     } else if (msg.text?.startsWith("/start")) {
-      await reply(msg, "Send me a photo of an object. Caption = title. Reply /delete to a confirmation to remove an item.");
+      await reply(msg, "Send me a photo of an object. Caption = title. Reply /delete to a confirmation to remove an item. /stats for collection stats.");
     }
   } catch (err) {
     console.error(err);
@@ -122,6 +124,43 @@ async function handleDelete(msg) {
     { path: `src/content/junk/${slug}.json`, delete: true },
   ]);
   await reply(msg, `🗑 Removed ${slug}. Gone after the next deploy.`);
+}
+
+// Cost per published item: background removal (~$0.0005 on 851-labs) +
+// classification (~$0.0005 on claude-4.5-haiku incl. image tokens).
+const COST_PER_ITEM = 0.001;
+
+async function handleStats(msg) {
+  const list = await gh(`/contents/src/content/junk`);
+  const jsons = list.filter((f) => f.name.endsWith(".json"));
+
+  const items = await Promise.all(
+    jsons.slice(0, 300).map(async (f) => {
+      const resp = await fetch(f.download_url);
+      return resp.json();
+    })
+  );
+  items.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+  const byCat = {};
+  for (const it of items) byCat[it.category || "misc"] = (byCat[it.category || "misc"] || 0) + 1;
+  const catLine = Object.entries(byCat)
+    .sort((a, b) => b[1] - a[1])
+    .map(([c, n]) => `${c} ${n}`)
+    .join(", ");
+
+  const day = (iso) => new Date(iso).toISOString().slice(0, 10);
+  const latest = items[items.length - 1];
+
+  await reply(
+    msg,
+    `📊 Junkyard\n` +
+      `Items: ${items.length}\n` +
+      `Categories: ${catLine}\n` +
+      `First: ${day(items[0].date)} · Latest: ${day(latest.date)} (${latest.title || "untitled"})\n` +
+      `Processing cost: ~$${(items.length * COST_PER_ITEM).toFixed(2)} total (≈$${COST_PER_ITEM}/item, bg removal + category)\n` +
+      `Hosting, bot, repo: $0`
+  );
 }
 
 // --- Telegram helpers ---

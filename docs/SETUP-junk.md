@@ -1,63 +1,47 @@
-# Setup — tybura.com/junk pipeline
+# tybura.com/junk — how it works & setup
 
-One-time setup, ~10 minutes. After this: send a photo to your bot → it's live on /junk in ~2 minutes.
+Live since 2026-08-13. Send a photo to **@tyburajunkbot** on Telegram → it's on [tybura.com/junk](https://www.tybura.com/junk) ~2 minutes later, background removed, cropped, categorized.
 
-## 1. Create the Telegram bot
+## Daily use
 
-1. Open Telegram, talk to **@BotFather** → `/newbot` → pick a name (e.g. `tybura junk`) and a username (e.g. `tybura_junk_bot`).
-2. Save the **bot token** it gives you → `TELEGRAM_BOT_TOKEN`.
-3. Get your own numeric Telegram user id: message **@userinfobot** and copy the `Id` → `ALLOWED_TELEGRAM_USER_ID`. (The bot ignores everyone else.)
+- **Publish**: send a photo (caption = title). Sending as *File* instead of Photo skips Telegram's compression and keeps full quality.
+- **Delete**: reply `/delete` to the bot's ✅ confirmation, or `/delete <slug>`.
+- **Stats**: `/stats` — item count, category breakdown, estimated processing cost.
+- The ✅ confirmation shows the auto-detected category; if it's wrong, delete and resend (or just live with it — it only affects the dropdown filter).
 
-## 2. Replicate (background removal)
+## Pipeline (api/telegram.js, Vercel function)
 
-1. Sign up at [replicate.com](https://replicate.com), add a payment method (pay-as-you-go, ~$0.002/image).
-2. Create an API token at replicate.com/account/api-tokens → `REPLICATE_API_TOKEN`.
+1. Telegram webhook (`https://www.tybura.com/api/telegram` — must be the **www** domain; the bare domain redirects and Telegram won't follow).
+2. Background removal: `851-labs/background-remover` on Replicate (~$0.0005/image).
+3. Auto-category: `anthropic/claude-4.5-haiku` on Replicate classifies the cutout into sticker / sign / print / patch / vehicle / container / tool / keepsake / gear / misc (~$0.0005/image). Falls back to `misc` on any failure — publishing never blocks.
+4. sharp: trim transparent padding, resize to ≤1600px WebP q85 + 480px thumb; dominant color recorded.
+5. One atomic git commit to `main` (image + thumb + metadata JSON) → Vercel rebuilds the static Astro site.
 
-## 3. GitHub token (lets the bot commit images)
+Total cost ≈ **$0.001 per item**. Everything else (bot, hosting, repo) is free.
 
-1. GitHub → Settings → Developer settings → **Fine-grained personal access tokens** → Generate new token.
-2. Repository access: **only `tybura/tybura`**. Permissions: **Contents → Read and write**. Expiration: your call (set a calendar reminder if it expires).
-3. Copy it → `GITHUB_TOKEN`.
+⚠️ While the Replicate account holds **less than $5 credit**, API calls are throttled (burst 1/min) — the function retries automatically, but each publish takes ~18s instead of ~7s. Topping up past $5 removes this.
 
-## 4. Vercel environment variables
+## Configuration (Vercel → Settings → Environment Variables)
 
-In the Vercel project for tybura.com → Settings → Environment Variables, add (Production):
-
-| Name | Value |
+| Name | Purpose |
 |---|---|
-| `TELEGRAM_BOT_TOKEN` | from step 1 |
-| `ALLOWED_TELEGRAM_USER_ID` | from step 1 |
-| `REPLICATE_API_TOKEN` | from step 2 |
-| `GITHUB_TOKEN` | from step 3 |
-| `TELEGRAM_WEBHOOK_SECRET` | any random string, e.g. output of `openssl rand -hex 16` |
+| `TELEGRAM_BOT_TOKEN` | from @BotFather |
+| `ALLOWED_TELEGRAM_USER_ID` | only this Telegram user can publish (694774480) |
+| `REPLICATE_API_TOKEN` | pays for bg removal + classification |
+| `GITHUB_TOKEN` | fine-grained PAT, Contents read/write on tybura/tybura only — **check expiry** |
+| `TELEGRAM_WEBHOOK_SECRET` | random string; must match the secret used in setWebhook |
 
-Optional overrides: `REPLICATE_MODEL` (default `851-labs/background-remover`), `GITHUB_REPO` (default `tybura/tybura`), `GITHUB_BRANCH` (default `main`).
+Optional: `REPLICATE_MODEL` (bg removal model), `GITHUB_REPO`, `GITHUB_BRANCH`.
 
-Redeploy after adding the variables so the function picks them up.
-
-## 5. Point Telegram at the function
-
-Run (fill in both values):
+To (re)point the webhook after changing domain or secret:
 
 ```bash
-curl "https://api.telegram.org/bot<TELEGRAM_BOT_TOKEN>/setWebhook?url=https://tybura.com/api/telegram&secret_token=<TELEGRAM_WEBHOOK_SECRET>"
+curl "https://api.telegram.org/bot<TOKEN>/setWebhook?url=https://www.tybura.com/api/telegram&secret_token=<SECRET>"
 ```
-
-Expected reply: `{"ok":true,...,"description":"Webhook was set"}`.
-
-## 6. Try it
-
-- Send your bot a photo of an object (caption becomes the title).
-- It replies with the processed cutout + a ✅; the item is live after the ~2 min rebuild.
-- Bad cutout or regret? **Reply `/delete` to that ✅ message** (or `/delete <slug>`).
-
-## Housekeeping
-
-- The three `sample-*` items were seeded so the page isn't empty — delete them once real items exist: remove `public/junk/sample-*` and `src/content/junk/sample-*.json` (or `/delete sample-mug` etc. from Telegram once the bot is live).
-- `scripts/seed-junk.mjs` can be deleted at the same time.
 
 ## Troubleshooting
 
-- Bot silent? Check the function logs in Vercel (Deployments → Functions → `api/telegram`). The bot also messages you the error for processing failures.
-- `curl "https://api.telegram.org/bot<TOKEN>/getWebhookInfo"` shows pending updates and the last webhook error.
-- Cutout quality is best with the object on a plain, contrasting background in decent light.
+- Bot silent → `curl "https://api.telegram.org/bot<TOKEN>/getWebhookInfo"` shows the last delivery error; also check Vercel function logs.
+- Processing errors are messaged back to you in Telegram as "⚠️ Failed: …".
+- Classifier diagnostics: POST to the webhook with header `x-junk-debug: 1` echoes the last classification attempt in the response.
+- Bad cutouts → shoot against a plain, contrasting background in decent light.

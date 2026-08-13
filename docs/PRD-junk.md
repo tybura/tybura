@@ -1,8 +1,10 @@
 # PRD — tybura.com/junk
 
-**Status:** Draft for approval
+**Status:** SHIPPED 2026-08-13 — this document is the original plan; see docs/SETUP-junk.md for the as-built system.
 **Date:** 2026-08-12
 **Owner:** tybura
+
+**Notable deviations from plan:** page branded "Junkyard" and styled to match the homepage design system (not the naturalselection.so sidebar layout); auto-categorization via vision model + dropdown filter added; dominant color captured at ingest (UI for it built then removed); lightbox with arrow-key navigation and thumbnail-first loading; webhook must target www.tybura.com (bare domain redirects).
 
 ---
 
