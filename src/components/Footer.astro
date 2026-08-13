@@ -1,4 +1,9 @@
 ---
+const lastUpdate = new Date().toLocaleDateString("en-US", {
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+});
 ---
 
 <footer class="footer">
@@ -19,7 +24,7 @@
   <!-- Col 3: last update -->
   <div class="footer-col">
     <p>Last update:</p>
-    <p>March 30, 2026</p>
+    <p>{lastUpdate}</p>
   </div>
 
   <!-- Col 4: type set -->
