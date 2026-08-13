@@ -1,0 +1,302 @@
+---
+import { getCollection } from "astro:content";
+
+const items = (await getCollection("junk")).sort(
+  (a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime()
+);
+
+const fmt = (iso: string) =>
+  new Date(iso)
+    .toLocaleDateString("en-GB", { year: "numeric", month: "2-digit", day: "2-digit" })
+    .replace(/\//g, ".");
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Junk — things Emil Tybura owns, apparently." />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <title>Junk — tybura®</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <script defer src="https://cloud.umami.is/script.js" data-website-id="624012a1-ebf7-4ac3-ad93-852f63cc5402"></script>
+    <script is:inline async src="https://www.googletagmanager.com/gtag/js?id=G-7KGSVQG4D8"></script>
+    <script is:inline>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-7KGSVQG4D8');
+    </script>
+  </head>
+  <body>
+    <aside class="sidebar">
+      <div class="sidebar-top">
+        <h1>Junk</h1>
+        <p class="muted">Things I own, apparently.</p>
+      </div>
+      <div class="sidebar-bottom">
+        <p class="muted">{items.length} item{items.length === 1 ? "" : "s"}</p>
+        <a href="/">tybura.com &rarr;</a>
+      </div>
+    </aside>
+
+    <main class="grid" data-count={items.length}>
+      {
+        items.length === 0 ? (
+          <p class="muted empty">Nothing here yet.</p>
+        ) : (
+          items.map((item) => (
+            <figure class="item">
+              <button
+                class="item-btn"
+                data-full={item.data.image}
+                data-title={item.data.title}
+                aria-label={item.data.title || "View item"}
+              >
+                <img
+                  src={item.data.thumb}
+                  width={item.data.width}
+                  height={item.data.height}
+                  alt={item.data.title || "Object"}
+                  loading="lazy"
+                  decoding="async"
+                />
+              </button>
+              <figcaption>
+                <span>{item.data.title || "Untitled"}</span>
+                <span class="muted">{fmt(item.data.date)}</span>
+              </figcaption>
+            </figure>
+          ))
+        )
+      }
+    </main>
+
+    <dialog id="lightbox">
+      <button id="lightbox-close" aria-label="Close">close</button>
+      <img id="lightbox-img" src="" alt="" />
+      <p id="lightbox-title" class="muted"></p>
+    </dialog>
+
+    <script>
+      const lightbox = document.getElementById("lightbox") as HTMLDialogElement;
+      const lightboxImg = document.getElementById("lightbox-img") as HTMLImageElement;
+      const lightboxTitle = document.getElementById("lightbox-title")!;
+
+      document.querySelectorAll<HTMLButtonElement>(".item-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          lightboxImg.src = btn.dataset.full || "";
+          lightboxTitle.textContent = btn.dataset.title || "";
+          lightbox.showModal();
+        });
+      });
+      document.getElementById("lightbox-close")!.addEventListener("click", () => lightbox.close());
+      lightbox.addEventListener("click", (e) => {
+        if (e.target === lightbox) lightbox.close();
+      });
+
+      // fade items in as they enter the viewport
+      const observer = new IntersectionObserver(
+        (entries) => {
+          for (const entry of entries) {
+            if (entry.isIntersecting) {
+              entry.target.classList.add("visible");
+              observer.unobserve(entry.target);
+            }
+          }
+        },
+        { rootMargin: "80px" }
+      );
+      document.querySelectorAll(".item").forEach((el) => observer.observe(el));
+    </script>
+
+    <style>
+      *,
+      *::before,
+      *::after {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --ink: #111111;
+        --muted: #9c9c9c;
+        --sidebar-w: 280px;
+      }
+
+      html,
+      body {
+        background: #ffffff;
+        color: var(--ink);
+        font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 13px;
+        line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      .muted {
+        color: var(--muted);
+      }
+
+      a {
+        color: var(--ink);
+        text-decoration: none;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+
+      .sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        width: var(--sidebar-w);
+        padding: 40px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        background: #ffffff;
+        z-index: 2;
+      }
+
+      .sidebar h1 {
+        font-size: 15px;
+        font-weight: 500;
+        margin-bottom: 8px;
+      }
+
+      .grid {
+        margin-left: var(--sidebar-w);
+        padding: 40px;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 64px 40px;
+        align-items: end;
+      }
+
+      .empty {
+        grid-column: 1 / -1;
+      }
+
+      .item {
+        opacity: 0;
+        transform: translateY(8px);
+        transition: opacity 0.5s ease, transform 0.5s ease;
+      }
+      .item.visible {
+        opacity: 1;
+        transform: none;
+      }
+
+      .item-btn {
+        display: block;
+        width: 100%;
+        border: 0;
+        background: none;
+        cursor: pointer;
+        padding: 0;
+      }
+
+      .item img {
+        display: block;
+        max-width: 100%;
+        max-height: 260px;
+        width: auto;
+        height: auto;
+        margin: 0 auto;
+        transition: transform 0.25s ease;
+      }
+      .item-btn:hover img {
+        transform: scale(1.03);
+      }
+
+      figcaption {
+        margin-top: 14px;
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+      }
+      .item:hover figcaption,
+      .item:focus-within figcaption {
+        opacity: 1;
+      }
+
+      dialog {
+        margin: auto;
+        border: 0;
+        background: #ffffff;
+        max-width: min(90vw, 900px);
+        max-height: 90vh;
+        padding: 40px;
+        text-align: center;
+        font-family: inherit;
+      }
+      dialog::backdrop {
+        background: rgba(255, 255, 255, 0.92);
+      }
+      dialog img {
+        max-width: 100%;
+        max-height: 70vh;
+        width: auto;
+        height: auto;
+        margin: 0 auto;
+        display: block;
+      }
+      #lightbox-title {
+        margin-top: 16px;
+      }
+      #lightbox-close {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        border: 0;
+        background: none;
+        font-family: inherit;
+        font-size: 13px;
+        color: var(--muted);
+        cursor: pointer;
+      }
+      #lightbox-close:hover {
+        color: var(--ink);
+      }
+
+      @media (max-width: 720px) {
+        .sidebar {
+          position: static;
+          width: 100%;
+          padding: 24px;
+          flex-direction: row;
+          align-items: baseline;
+          gap: 16px;
+        }
+        .sidebar-bottom {
+          display: flex;
+          gap: 16px;
+          align-items: baseline;
+        }
+        .grid {
+          margin-left: 0;
+          padding: 24px;
+          grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+          gap: 48px 24px;
+        }
+        .item img {
+          max-height: 180px;
+        }
+        figcaption {
+          opacity: 1;
+        }
+      }
+    </style>
+  </body>
+</html>
