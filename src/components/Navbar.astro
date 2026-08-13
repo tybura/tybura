@@ -1,10 +1,12 @@
 ---
+import { getCollection } from "astro:content";
+const junkCount = (await getCollection("junk")).length;
 ---
 
 <nav class="navbar">
   <div class="nav-left" id="nav-main">
     <a href="/" class="nav-link">Home</a>
-    <a href="/junk" class="nav-link">Junkyard</a>
+    <a href="/junk" class="nav-link">Junkyard <sup class="nav-count">{junkCount}</sup></a>
     <button class="nav-link nav-btn" id="nav-contact-open">Contact</button>
   </div>
 
@@ -151,6 +153,13 @@
   .nav-link {
     text-align: center;
     white-space: nowrap;
+  }
+
+  .nav-count {
+    font-size: 9px;
+    line-height: 1;
+    opacity: 0.5;
+    letter-spacing: 0;
   }
 
   /* ---- button reset ---- */
