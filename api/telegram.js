@@ -151,14 +151,23 @@ async function tgJson(url, body) {
 
 async function removeBackground(buffer) {
   const dataUri = `data:image/jpeg;base64,${buffer.toString("base64")}`;
-  const resp = await fetch(`https://api.replicate.com/v1/models/${MODEL}/predictions`, {
+  // Community models aren't callable via the model-scoped predictions
+  // endpoint — resolve the latest version and use /v1/predictions.
+  const modelResp = await fetch(`https://api.replicate.com/v1/models/${MODEL}`, {
+    headers: { Authorization: `Bearer ${process.env.REPLICATE_API_TOKEN}` },
+  });
+  const model = await modelResp.json();
+  if (modelResp.status >= 400 || !model.latest_version?.id) {
+    throw new Error(`Replicate model lookup failed: ${model.detail || modelResp.status}`);
+  }
+  const resp = await fetch(`https://api.replicate.com/v1/predictions`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${process.env.REPLICATE_API_TOKEN}`,
       "content-type": "application/json",
       Prefer: "wait=55",
     },
-    body: JSON.stringify({ input: { image: dataUri, format: "png" } }),
+    body: JSON.stringify({ version: model.latest_version.id, input: { image: dataUri, format: "png" } }),
   });
   let prediction = await resp.json();
   if (resp.status >= 400) throw new Error(`Replicate error: ${prediction.detail || resp.status}`);
