@@ -1,4 +1,7 @@
 ---
+import Layout from "../layouts/Layout.astro";
+import Navbar from "../components/Navbar.astro";
+import Footer from "../components/Footer.astro";
 import { getCollection } from "astro:content";
 
 const items = (await getCollection("junk")).sort(
@@ -6,50 +9,26 @@ const items = (await getCollection("junk")).sort(
 );
 
 const fmt = (iso: string) =>
-  new Date(iso)
-    .toLocaleDateString("en-GB", { year: "numeric", month: "2-digit", day: "2-digit" })
-    .replace(/\//g, ".");
+  new Date(iso).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "2-digit",
+  });
 ---
 
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Junk — things Emil Tybura owns, apparently." />
-    <link rel="icon" type="image/png" href="/favicon.png" />
-    <title>Junk — tybura®</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap"
-      rel="stylesheet"
-    />
-    <script defer src="https://cloud.umami.is/script.js" data-website-id="624012a1-ebf7-4ac3-ad93-852f63cc5402"></script>
-    <script is:inline async src="https://www.googletagmanager.com/gtag/js?id=G-7KGSVQG4D8"></script>
-    <script is:inline>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-7KGSVQG4D8');
-    </script>
-  </head>
-  <body>
-    <aside class="sidebar">
-      <div class="sidebar-top">
-        <h1>Junk</h1>
-        <p class="muted">Things I own, apparently.</p>
-      </div>
-      <div class="sidebar-bottom">
-        <p class="muted">{items.length} item{items.length === 1 ? "" : "s"}</p>
-        <a href="/">tybura.com &rarr;</a>
-      </div>
-    </aside>
+<Layout title="Junk — tybura®">
+  <Navbar />
 
-    <main class="grid" data-count={items.length}>
+  <main class="main-wrapper">
+    <header class="junk-header">
+      <p>Junk — things I own, apparently.</p>
+      <p class="junk-count">{items.length} item{items.length === 1 ? "" : "s"}</p>
+    </header>
+
+    <section class="junk-grid">
       {
         items.length === 0 ? (
-          <p class="muted empty">Nothing here yet.</p>
+          <p class="junk-empty">Nothing here yet.</p>
         ) : (
           items.map((item) => (
             <figure class="item">
@@ -68,235 +47,205 @@ const fmt = (iso: string) =>
                   decoding="async"
                 />
               </button>
-              <figcaption>
+              <figcaption class="item-meta">
                 <span>{item.data.title || "Untitled"}</span>
-                <span class="muted">{fmt(item.data.date)}</span>
+                <span>{fmt(item.data.date)}</span>
               </figcaption>
             </figure>
           ))
         )
       }
-    </main>
+    </section>
+  </main>
 
-    <dialog id="lightbox">
-      <button id="lightbox-close" aria-label="Close">close</button>
-      <img id="lightbox-img" src="" alt="" />
-      <p id="lightbox-title" class="muted"></p>
-    </dialog>
+  <Footer />
 
-    <script>
-      const lightbox = document.getElementById("lightbox") as HTMLDialogElement;
-      const lightboxImg = document.getElementById("lightbox-img") as HTMLImageElement;
-      const lightboxTitle = document.getElementById("lightbox-title")!;
+  <dialog id="lightbox">
+    <button id="lightbox-close" aria-label="Close">Close</button>
+    <img id="lightbox-img" src="" alt="" />
+    <p id="lightbox-title"></p>
+  </dialog>
+</Layout>
 
-      document.querySelectorAll<HTMLButtonElement>(".item-btn").forEach((btn) => {
-        btn.addEventListener("click", () => {
-          lightboxImg.src = btn.dataset.full || "";
-          lightboxTitle.textContent = btn.dataset.title || "";
-          lightbox.showModal();
-        });
-      });
-      document.getElementById("lightbox-close")!.addEventListener("click", () => lightbox.close());
-      lightbox.addEventListener("click", (e) => {
-        if (e.target === lightbox) lightbox.close();
-      });
+<script>
+  const lightbox = document.getElementById("lightbox") as HTMLDialogElement;
+  const lightboxImg = document.getElementById("lightbox-img") as HTMLImageElement;
+  const lightboxTitle = document.getElementById("lightbox-title")!;
 
-      // fade items in as they enter the viewport
-      const observer = new IntersectionObserver(
-        (entries) => {
-          for (const entry of entries) {
-            if (entry.isIntersecting) {
-              entry.target.classList.add("visible");
-              observer.unobserve(entry.target);
-            }
-          }
-        },
-        { rootMargin: "80px" }
-      );
-      document.querySelectorAll(".item").forEach((el) => observer.observe(el));
-    </script>
+  document.querySelectorAll<HTMLButtonElement>(".item-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      lightboxImg.src = btn.dataset.full || "";
+      lightboxTitle.textContent = btn.dataset.title || "";
+      lightbox.showModal();
+    });
+  });
+  document.getElementById("lightbox-close")!.addEventListener("click", () => lightbox.close());
+  lightbox.addEventListener("click", (e) => {
+    if (e.target === lightbox) lightbox.close();
+  });
 
-    <style>
-      *,
-      *::before,
-      *::after {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
-
-      :root {
-        --ink: #111111;
-        --muted: #9c9c9c;
-        --sidebar-w: 280px;
-      }
-
-      html,
-      body {
-        background: #ffffff;
-        color: var(--ink);
-        font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
-        font-size: 13px;
-        line-height: 1.5;
-        -webkit-font-smoothing: antialiased;
-      }
-
-      .muted {
-        color: var(--muted);
-      }
-
-      a {
-        color: var(--ink);
-        text-decoration: none;
-      }
-      a:hover {
-        text-decoration: underline;
-      }
-
-      .sidebar {
-        position: fixed;
-        top: 0;
-        left: 0;
-        bottom: 0;
-        width: var(--sidebar-w);
-        padding: 40px;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        background: #ffffff;
-        z-index: 2;
-      }
-
-      .sidebar h1 {
-        font-size: 15px;
-        font-weight: 500;
-        margin-bottom: 8px;
-      }
-
-      .grid {
-        margin-left: var(--sidebar-w);
-        padding: 40px;
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-        gap: 64px 40px;
-        align-items: end;
-      }
-
-      .empty {
-        grid-column: 1 / -1;
-      }
-
-      .item {
-        opacity: 0;
-        transform: translateY(8px);
-        transition: opacity 0.5s ease, transform 0.5s ease;
-      }
-      .item.visible {
-        opacity: 1;
-        transform: none;
-      }
-
-      .item-btn {
-        display: block;
-        width: 100%;
-        border: 0;
-        background: none;
-        cursor: pointer;
-        padding: 0;
-      }
-
-      .item img {
-        display: block;
-        max-width: 100%;
-        max-height: 260px;
-        width: auto;
-        height: auto;
-        margin: 0 auto;
-        transition: transform 0.25s ease;
-      }
-      .item-btn:hover img {
-        transform: scale(1.03);
-      }
-
-      figcaption {
-        margin-top: 14px;
-        display: flex;
-        justify-content: space-between;
-        gap: 12px;
-        opacity: 0;
-        transition: opacity 0.2s ease;
-      }
-      .item:hover figcaption,
-      .item:focus-within figcaption {
-        opacity: 1;
-      }
-
-      dialog {
-        margin: auto;
-        border: 0;
-        background: #ffffff;
-        max-width: min(90vw, 900px);
-        max-height: 90vh;
-        padding: 40px;
-        text-align: center;
-        font-family: inherit;
-      }
-      dialog::backdrop {
-        background: rgba(255, 255, 255, 0.92);
-      }
-      dialog img {
-        max-width: 100%;
-        max-height: 70vh;
-        width: auto;
-        height: auto;
-        margin: 0 auto;
-        display: block;
-      }
-      #lightbox-title {
-        margin-top: 16px;
-      }
-      #lightbox-close {
-        position: absolute;
-        top: 16px;
-        right: 16px;
-        border: 0;
-        background: none;
-        font-family: inherit;
-        font-size: 13px;
-        color: var(--muted);
-        cursor: pointer;
-      }
-      #lightbox-close:hover {
-        color: var(--ink);
-      }
-
-      @media (max-width: 720px) {
-        .sidebar {
-          position: static;
-          width: 100%;
-          padding: 24px;
-          flex-direction: row;
-          align-items: baseline;
-          gap: 16px;
-        }
-        .sidebar-bottom {
-          display: flex;
-          gap: 16px;
-          align-items: baseline;
-        }
-        .grid {
-          margin-left: 0;
-          padding: 24px;
-          grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-          gap: 48px 24px;
-        }
-        .item img {
-          max-height: 180px;
-        }
-        figcaption {
-          opacity: 1;
+  // fade items in as they enter the viewport
+  const observer = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("visible");
+          observer.unobserve(entry.target);
         }
       }
-    </style>
-  </body>
-</html>
+    },
+    { rootMargin: "80px" }
+  );
+  document.querySelectorAll(".item").forEach((el) => observer.observe(el));
+</script>
+
+<style is:global>
+  /* /junk keeps the homepage system but flips the palette to white/black */
+  :root {
+    --color-bg: #ffffff;
+    --color-text: #111111;
+    --color-accent: #111111;
+  }
+</style>
+
+<style>
+  .main-wrapper {
+    display: flex;
+    flex-direction: column;
+    padding: calc(38px + var(--content-padding)) var(--content-padding) var(--content-padding);
+    width: 100%;
+    min-height: calc(100vh - 60px);
+  }
+
+  .junk-header {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--gap);
+    padding-bottom: calc(var(--gap) * 4);
+  }
+
+  .junk-count {
+    opacity: 0.5;
+  }
+
+  .junk-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: calc(var(--gap) * 4) var(--gap);
+    width: 100%;
+  }
+
+  .junk-empty {
+    grid-column: 1 / -1;
+    opacity: 0.5;
+  }
+
+  .item {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+  .item.visible {
+    opacity: 1;
+    transform: none;
+  }
+
+  .item-btn {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    padding: 0;
+  }
+
+  .item-btn img {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin: 0 auto;
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    transition: transform 0.25s ease;
+  }
+  .item-btn:hover img {
+    transform: scale(1.03);
+  }
+
+  .item-meta {
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+  }
+
+  .item-meta span:last-child {
+    opacity: 0.5;
+  }
+
+  dialog {
+    margin: auto;
+    border: 1px solid var(--color-text);
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-family);
+    font-size: var(--font-size);
+    font-weight: var(--font-weight);
+    line-height: var(--line-height);
+    letter-spacing: var(--letter-spacing);
+    max-width: min(90vw, 900px);
+    max-height: 90vh;
+    padding: calc(var(--gap) * 3);
+    text-align: center;
+  }
+  dialog::backdrop {
+    background: rgba(255, 255, 255, 0.92);
+  }
+  dialog img {
+    max-width: 100%;
+    max-height: 70vh;
+    width: auto;
+    height: auto;
+    margin: 0 auto;
+    display: block;
+  }
+  #lightbox-title {
+    margin-top: var(--gap);
+  }
+  #lightbox-close {
+    position: absolute;
+    top: var(--content-padding);
+    right: var(--content-padding);
+    border: 0;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.2s ease;
+    background: none;
+    font: inherit;
+    letter-spacing: inherit;
+    color: var(--color-text);
+    cursor: pointer;
+    padding: 0;
+  }
+  #lightbox-close:hover {
+    border-bottom-color: var(--color-text);
+  }
+
+  @media (max-width: 1024px) {
+    .junk-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  @media (max-width: 640px) {
+    .junk-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+</style>
