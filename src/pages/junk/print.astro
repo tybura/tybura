@@ -1,0 +1,249 @@
+---
+import { getCollection } from "astro:content";
+
+// Chronological — the poster reads as an archive.
+const items = (await getCollection("junk")).sort(
+  (a, b) => new Date(a.data.date).getTime() - new Date(b.data.date).getTime()
+);
+
+const printed = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+const since = items.length
+  ? new Date(items[0].data.date).toLocaleDateString("en-US", { year: "numeric", month: "long" })
+  : "";
+
+const fmt = (iso: string) =>
+  new Date(iso)
+    .toLocaleDateString("en-GB", { year: "numeric", month: "2-digit", day: "2-digit" })
+    .replace(/\//g, ".");
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex" />
+    <link rel="icon" type="image/png" href="/tybura-favicon-new.png" />
+    <title>tybura® - junkyard, printed edition</title>
+  </head>
+  <body>
+    <div class="toolbar">
+      Junkyard print sheet (A1) —
+      <button onclick="window.print()">Print</button>
+      <span>/</span>
+      <a href="/junk">back to junkyard</a>
+    </div>
+
+    <main class="poster">
+      <header class="poster-header">
+        <h1>JUNKYARD</h1>
+        <div class="poster-intro">
+          <p>An online album of interesting objects I own or just noticed somewhere.</p>
+          <p>
+            {items.length} objects · catalogued since {since} · tybura.com/junk · printed {printed}
+          </p>
+        </div>
+      </header>
+
+      <section class="poster-grid">
+        {
+          items.map((item, i) => (
+            <figure class="cell">
+              <div class="cell-frame">
+                <img src={item.data.image} alt={item.data.title || "Object"} />
+              </div>
+              <figcaption>
+                <span class="cell-no">{String(i + 1).padStart(3, "0")}</span>
+                <span class="cell-title">{item.data.title || "Untitled"}</span>
+                <span class="cell-sub">
+                  {fmt(item.data.date)}
+                  {item.data.location ? ` · ${item.data.location}` : ""}
+                </span>
+              </figcaption>
+            </figure>
+          ))
+        }
+      </section>
+
+      <footer class="poster-footer">
+        <span>tybura&reg;</span>
+        <span>junkyard — printed edition</span>
+      </footer>
+    </main>
+
+    <script is:inline>
+      // scale the on-screen preview to fit the window (print is unaffected)
+      function fitPoster() {
+        const poster = document.querySelector(".poster");
+        if (!poster) return;
+        const a1WidthPx = poster.offsetWidth; // 594mm in px
+        poster.style.zoom = Math.min(0.5, (window.innerWidth - 48) / a1WidthPx);
+      }
+      window.addEventListener("resize", fitPoster);
+      window.addEventListener("DOMContentLoaded", fitPoster);
+    </script>
+
+    <style>
+      @font-face {
+        font-family: "Overused Grotesk";
+        src: url("https://cdn.jsdelivr.net/gh/nicoh/overused-grotesk-webfont@latest/fonts/OverusedGrotesk-SemiBold.woff2")
+          format("woff2");
+        font-weight: 600;
+        font-style: normal;
+        font-display: swap;
+      }
+
+      *,
+      *::before,
+      *::after {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      @page {
+        size: A1 portrait;
+        margin: 0;
+      }
+
+      body {
+        font-family: "Overused Grotesk", system-ui, sans-serif;
+        font-weight: 600;
+        letter-spacing: -0.03em;
+        color: #111;
+        background: #e9e9e9;
+      }
+
+      .toolbar {
+        position: sticky;
+        top: 0;
+        z-index: 5;
+        padding: 12px;
+        font-size: 14px;
+        background: #ffffff;
+        border-bottom: 1px solid #111;
+      }
+
+      .toolbar button {
+        border: 0;
+        border-bottom: 1px solid #111;
+        background: none;
+        font: inherit;
+        letter-spacing: inherit;
+        cursor: pointer;
+        padding: 0;
+      }
+
+      .toolbar a {
+        color: #111;
+        text-decoration: none;
+        border-bottom: 1px solid #111;
+      }
+
+      .toolbar span {
+        opacity: 0.4;
+      }
+
+      .poster {
+        width: 594mm;
+        min-height: 841mm;
+        margin: 24px auto 64px;
+        padding: 18mm;
+        background: #ffffff;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 2px 24px rgba(0, 0, 0, 0.18);
+      }
+
+      .poster-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        gap: 12mm;
+        padding-bottom: 10mm;
+        border-bottom: 0.6mm solid #111;
+      }
+
+      .poster-header h1 {
+        font-size: 46mm;
+        line-height: 0.9;
+        letter-spacing: -0.05em;
+      }
+
+      .poster-intro {
+        text-align: right;
+        font-size: 5.2mm;
+        line-height: 1.45;
+      }
+
+      .poster-intro p + p {
+        opacity: 0.5;
+      }
+
+      .poster-grid {
+        flex: 1;
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 12mm 8mm;
+        padding: 12mm 0;
+        align-content: start;
+      }
+
+      .cell-frame {
+        height: 72mm;
+        display: flex;
+        align-items: flex-end;
+      }
+
+      .cell-frame img {
+        max-width: 82%;
+        max-height: 100%;
+        width: auto;
+        height: auto;
+      }
+
+      figcaption {
+        margin-top: 3mm;
+        display: flex;
+        flex-direction: column;
+        font-size: 3.6mm;
+        line-height: 1.4;
+      }
+
+      .cell-no {
+        opacity: 0.35;
+      }
+
+      .cell-sub {
+        opacity: 0.5;
+      }
+
+      .poster-footer {
+        display: flex;
+        justify-content: space-between;
+        padding-top: 8mm;
+        border-top: 0.6mm solid #111;
+        font-size: 5.2mm;
+      }
+
+      @media screen {
+        .poster {
+          zoom: 0.38; /* refined by the fit script below */
+        }
+      }
+
+      @media print {
+        .toolbar {
+          display: none;
+        }
+        body {
+          background: none;
+        }
+        .poster {
+          margin: 0;
+          box-shadow: none;
+        }
+      }
+    </style>
+  </body>
+</html>
