@@ -130,7 +130,7 @@ const fmt = (iso: string) =>
 
   .junk-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     gap: calc(var(--gap) * 4) var(--gap);
     width: 100%;
   }
@@ -166,10 +166,9 @@ const fmt = (iso: string) =>
 
   .item-btn img {
     position: absolute;
-    bottom: 0;
+    top: 50%;
     left: 0;
-    right: 0;
-    margin: 0 auto;
+    transform: translateY(-50%);
     max-width: 60%;
     max-height: 60%;
     width: auto;
@@ -177,7 +176,7 @@ const fmt = (iso: string) =>
     transition: transform 0.25s ease;
   }
   .item-btn:hover img {
-    transform: scale(1.03);
+    transform: translateY(-50%) scale(1.03);
   }
 
   .item-meta {
