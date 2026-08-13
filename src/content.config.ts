@@ -28,6 +28,9 @@ const junk = defineCollection({
     height: z.number(),
     color: z.string().optional(), // dominant color, #rrggbb
     category: z.string().optional(), // auto-detected at ingest
+    location: z.string().optional(), // reverse-geocoded from EXIF GPS (File sends only)
+    lat: z.number().optional(),
+    lng: z.number().optional(),
   }),
 });
 

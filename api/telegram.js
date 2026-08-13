@@ -12,6 +12,7 @@
 //   GITHUB_REPO (default "tybura/tybura"), GITHUB_BRANCH (default "main")
 
 import sharp from "sharp";
+import exifReader from "exif-reader";
 
 const TG = () => `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}`;
 const REPO = process.env.GITHUB_REPO || "tybura/tybura";
@@ -62,6 +63,7 @@ async function handlePhoto(msg) {
     : msg.document.file_id;
 
   const original = await downloadTelegramFile(fileId);
+  const geo = await extractLocation(original); // EXIF GPS survives only on File sends
   const cutout = await removeBackground(original);
 
   // Trim transparent padding, normalize size, encode WebP.
@@ -94,6 +96,7 @@ async function handlePhoto(msg) {
     height: info.height,
     color,
     category,
+    ...(geo || {}),
   };
 
   await commit(
@@ -108,7 +111,7 @@ async function handlePhoto(msg) {
   await sendPhoto(
     msg.chat.id,
     thumb,
-    `✅ ${title || "Untitled"} · ${category}\nslug: ${slug}\nLive in ~2 min → https://tybura.com/junk\n(reply /delete to this message to remove)`
+    `✅ ${title || "Untitled"} · ${category}${geo ? `\n📍 ${geo.location}` : ""}\nslug: ${slug}\nLive in ~2 min → https://tybura.com/junk\n(reply /delete to this message to remove)`
   );
 }
 
@@ -161,6 +164,37 @@ async function handleStats(msg) {
       `Processing cost: ~$${(items.length * COST_PER_ITEM).toFixed(2)} total (≈$${COST_PER_ITEM}/item, bg removal + category)\n` +
       `Hosting, bot, repo: $0`
   );
+}
+
+// --- Location (EXIF GPS -> text label) ---
+
+function dmsToDec(dms, ref) {
+  const dec = dms[0] + dms[1] / 60 + dms[2] / 3600;
+  return ref === "S" || ref === "W" ? -dec : dec;
+}
+
+async function extractLocation(buffer) {
+  try {
+    const md = await sharp(buffer).metadata();
+    if (!md.exif) return null;
+    const gps = exifReader(md.exif).GPSInfo;
+    if (!gps?.GPSLatitude || !gps?.GPSLongitude) return null;
+    const lat = dmsToDec(gps.GPSLatitude, gps.GPSLatitudeRef);
+    const lng = dmsToDec(gps.GPSLongitude, gps.GPSLongitudeRef);
+    const resp = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=jsonv2&zoom=16`,
+      { headers: { "User-Agent": "tybura-junkyard/1.0 (emil@tybura.com)" } }
+    );
+    if (!resp.ok) return { lat, lng, location: `${lat.toFixed(4)}, ${lng.toFixed(4)}` };
+    const a = (await resp.json()).address || {};
+    const place = a.road || a.neighbourhood || a.suburb || a.hamlet;
+    const city = a.city || a.town || a.village || a.municipality || a.county;
+    const location = [place, city, !city && a.country].filter(Boolean).join(", ") || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+    return { lat, lng, location };
+  } catch (err) {
+    console.warn("location failed:", err.message);
+    return null;
+  }
 }
 
 // --- Telegram helpers ---

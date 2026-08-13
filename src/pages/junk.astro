@@ -53,6 +53,7 @@ const fmt = (iso: string) =>
                 class="item-btn"
                 data-full={item.data.image}
                 data-title={item.data.title}
+                data-location={item.data.location}
                 aria-label={item.data.title || "View item"}
               >
                 <img
@@ -82,7 +83,10 @@ const fmt = (iso: string) =>
     <img id="lightbox-img" src="" alt="" />
     <div class="lightbox-nav">
       <button id="lightbox-prev" aria-label="Previous item">&larr; Prev</button>
-      <p id="lightbox-title"></p>
+      <div class="lightbox-meta">
+        <p id="lightbox-title"></p>
+        <p id="lightbox-loc" hidden></p>
+      </div>
       <button id="lightbox-next" aria-label="Next item">Next &rarr;</button>
     </div>
   </dialog>
@@ -110,6 +114,9 @@ const fmt = (iso: string) =>
     const btn = buttons[current];
     const full = btn.dataset.full || "";
     lightboxTitle.textContent = btn.dataset.title || "";
+    const loc = document.getElementById("lightbox-loc")!;
+    loc.textContent = btn.dataset.location ? `📍 ${btn.dataset.location}` : "";
+    loc.hidden = !btn.dataset.location;
 
     if (loaded.has(full)) {
       lightboxImg.src = full;
@@ -405,7 +412,18 @@ const fmt = (iso: string) =>
     border-bottom-color: var(--color-text);
   }
 
+  .lightbox-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    text-align: center;
+  }
+
   #lightbox-title {
+    opacity: 0.5;
+  }
+
+  #lightbox-loc {
     opacity: 0.5;
   }
   #lightbox-close {
