@@ -63,7 +63,11 @@ const fmt = (iso: string) =>
   <dialog id="lightbox">
     <button id="lightbox-close" aria-label="Close">Close</button>
     <img id="lightbox-img" src="" alt="" />
-    <p id="lightbox-title"></p>
+    <div class="lightbox-nav">
+      <button id="lightbox-prev" aria-label="Previous item">&larr; Prev</button>
+      <p id="lightbox-title"></p>
+      <button id="lightbox-next" aria-label="Next item">Next &rarr;</button>
+    </div>
   </dialog>
 </Layout>
 
@@ -72,16 +76,34 @@ const fmt = (iso: string) =>
   const lightboxImg = document.getElementById("lightbox-img") as HTMLImageElement;
   const lightboxTitle = document.getElementById("lightbox-title")!;
 
-  document.querySelectorAll<HTMLButtonElement>(".item-btn").forEach((btn) => {
+  const buttons = [...document.querySelectorAll<HTMLButtonElement>(".item-btn")];
+  let current = 0;
+
+  function show(index: number) {
+    current = (index + buttons.length) % buttons.length;
+    const btn = buttons[current];
+    lightboxImg.src = btn.dataset.full || "";
+    lightboxTitle.textContent = btn.dataset.title || "";
+  }
+
+  buttons.forEach((btn, i) => {
     btn.addEventListener("click", () => {
-      lightboxImg.src = btn.dataset.full || "";
-      lightboxTitle.textContent = btn.dataset.title || "";
+      show(i);
       lightbox.showModal();
     });
   });
+
+  document.getElementById("lightbox-prev")!.addEventListener("click", () => show(current - 1));
+  document.getElementById("lightbox-next")!.addEventListener("click", () => show(current + 1));
   document.getElementById("lightbox-close")!.addEventListener("click", () => lightbox.close());
   lightbox.addEventListener("click", (e) => {
     if (e.target === lightbox) lightbox.close();
+  });
+
+  window.addEventListener("keydown", (e) => {
+    if (!lightbox.open) return;
+    if (e.key === "ArrowLeft") show(current - 1);
+    if (e.key === "ArrowRight") show(current + 1);
   });
 
   // fade items in as they enter the viewport
@@ -215,8 +237,33 @@ const fmt = (iso: string) =>
     margin: 0 auto;
     display: block;
   }
+  .lightbox-nav {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--gap);
+    margin-top: calc(var(--gap) * 2);
+  }
+
+  .lightbox-nav button {
+    border: 0;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.2s ease;
+    background: none;
+    font: inherit;
+    letter-spacing: inherit;
+    color: var(--color-text);
+    cursor: pointer;
+    padding: 0;
+    white-space: nowrap;
+  }
+
+  .lightbox-nav button:hover {
+    border-bottom-color: var(--color-text);
+  }
+
   #lightbox-title {
-    margin-top: var(--gap);
+    opacity: 0.5;
   }
   #lightbox-close {
     position: absolute;
