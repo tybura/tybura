@@ -78,12 +78,37 @@ const fmt = (iso: string) =>
 
   const buttons = [...document.querySelectorAll<HTMLButtonElement>(".item-btn")];
   let current = 0;
+  const loaded = new Set<string>();
+
+  function preload(index: number) {
+    const src = buttons[(index + buttons.length) % buttons.length].dataset.full || "";
+    if (loaded.has(src)) return;
+    const img = new Image();
+    img.onload = () => loaded.add(src);
+    img.src = src;
+  }
 
   function show(index: number) {
     current = (index + buttons.length) % buttons.length;
     const btn = buttons[current];
-    lightboxImg.src = btn.dataset.full || "";
+    const full = btn.dataset.full || "";
     lightboxTitle.textContent = btn.dataset.title || "";
+
+    if (loaded.has(full)) {
+      lightboxImg.src = full;
+    } else {
+      // show the cached grid thumbnail immediately, swap in the full-size
+      // image once it has downloaded (unless the user has moved on)
+      lightboxImg.src = btn.querySelector("img")!.currentSrc || full;
+      const hi = new Image();
+      hi.onload = () => {
+        loaded.add(full);
+        if (buttons[current] === btn) lightboxImg.src = full;
+      };
+      hi.src = full;
+    }
+    preload(current + 1);
+    preload(current - 1);
   }
 
   buttons.forEach((btn, i) => {
