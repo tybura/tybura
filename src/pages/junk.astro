@@ -25,10 +25,19 @@ const fmt = (iso: string) =>
     <header class="junk-header">
       <p>Junkyard is an online album of interesting objects I own or just noticed somewhere.</p>
       <div class="junk-header-right">
-        <select id="junk-category" aria-label="Filter by category">
-          <option value="">All categories</option>
-          {categories.map((c) => <option value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>)}
-        </select>
+        <div class="junk-filter" id="junk-filter">
+          <button class="filter-toggle" id="filter-toggle" aria-haspopup="listbox" aria-expanded="false">
+            All categories
+          </button>
+          <div class="filter-menu" id="filter-menu" role="listbox" hidden>
+            <button class="filter-option is-active" data-value="">All categories</button>
+            {categories.map((c) => (
+              <button class="filter-option" data-value={c}>
+                {c.charAt(0).toUpperCase() + c.slice(1)}
+              </button>
+            ))}
+          </div>
+        </div>
         <p class="junk-count">{items.length} item{items.length === 1 ? "" : "s"}</p>
       </div>
     </header>
@@ -132,16 +141,39 @@ const fmt = (iso: string) =>
   const countEl = document.querySelector(".junk-count")!;
   const totalLabel = countEl.textContent;
 
-  document.getElementById("junk-category")!.addEventListener("change", (e) => {
-    const cat = (e.target as HTMLSelectElement).value;
-    let visible = 0;
-    figs.forEach((f) => {
-      const showIt = !cat || f.dataset.category === cat;
-      f.style.display = showIt ? "" : "none";
-      if (showIt) visible++;
+  const filterWrap = document.getElementById("junk-filter")!;
+  const filterToggle = document.getElementById("filter-toggle")!;
+  const filterMenu = document.getElementById("filter-menu")!;
+
+  function setMenuOpen(open: boolean) {
+    filterMenu.hidden = !open;
+    filterToggle.setAttribute("aria-expanded", String(open));
+  }
+
+  filterToggle.addEventListener("click", () => setMenuOpen(filterMenu.hidden));
+  document.addEventListener("click", (e) => {
+    if (!filterWrap.contains(e.target as Node)) setMenuOpen(false);
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !lightbox.open) setMenuOpen(false);
+  });
+
+  filterMenu.querySelectorAll<HTMLButtonElement>(".filter-option").forEach((opt) => {
+    opt.addEventListener("click", () => {
+      const cat = opt.dataset.value || "";
+      filterToggle.textContent = opt.textContent!.trim();
+      filterMenu.querySelectorAll(".filter-option").forEach((o) => o.classList.toggle("is-active", o === opt));
+      setMenuOpen(false);
+
+      let visible = 0;
+      figs.forEach((f) => {
+        const showIt = !cat || f.dataset.category === cat;
+        f.style.display = showIt ? "" : "none";
+        if (showIt) visible++;
+      });
+      buttons = figs.filter((f) => f.style.display !== "none").map((f) => f.querySelector<HTMLButtonElement>(".item-btn")!);
+      countEl.textContent = cat ? `${visible} item${visible === 1 ? "" : "s"}` : totalLabel;
     });
-    buttons = figs.filter((f) => f.style.display !== "none").map((f) => f.querySelector<HTMLButtonElement>(".item-btn")!);
-    countEl.textContent = cat ? `${visible} item${visible === 1 ? "" : "s"}` : totalLabel;
   });
 
   document.getElementById("lightbox-prev")!.addEventListener("click", () => show(current - 1));
@@ -208,12 +240,13 @@ const fmt = (iso: string) =>
     opacity: 0.5;
   }
 
-  #junk-category {
-    appearance: none;
-    -webkit-appearance: none;
+  .junk-filter {
+    position: relative;
+  }
+
+  .filter-toggle {
     border: 0;
     border-bottom: 1px solid var(--color-text);
-    border-radius: 0;
     background: none;
     font: inherit;
     letter-spacing: inherit;
@@ -223,6 +256,41 @@ const fmt = (iso: string) =>
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='6'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23111'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right center;
+    white-space: nowrap;
+  }
+
+  .filter-menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    min-width: 100%;
+    background: var(--color-bg);
+    border: 1px solid var(--color-text);
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .filter-menu[hidden] {
+    display: none;
+  }
+
+  .filter-option {
+    border: 0;
+    background: none;
+    font: inherit;
+    letter-spacing: inherit;
+    color: var(--color-text);
+    cursor: pointer;
+    text-align: left;
+    padding: 6px 10px;
+    white-space: nowrap;
+  }
+
+  .filter-option:hover,
+  .filter-option.is-active {
+    background: var(--color-text);
+    color: var(--color-bg);
   }
 
   .junk-grid {
