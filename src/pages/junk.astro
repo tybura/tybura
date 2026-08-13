@@ -189,6 +189,8 @@ const fmt = (iso: string) =>
   lightbox.addEventListener("click", (e) => {
     if (e.target === lightbox) lightbox.close();
   });
+  // Chrome restores focus (with a visible ring) to the grid button on close.
+  lightbox.addEventListener("close", () => (document.activeElement as HTMLElement)?.blur());
 
   window.addEventListener("keydown", (e) => {
     if (!lightbox.open) return;
@@ -234,6 +236,17 @@ const fmt = (iso: string) =>
     justify-content: space-between;
     gap: var(--gap);
     padding-bottom: var(--gap);
+  }
+
+  /* no focus ring on mouse/touch interaction; keep a subtle one for keyboard */
+  button:focus:not(:focus-visible),
+  select:focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  button:focus-visible {
+    outline: 1px solid var(--color-text);
+    outline-offset: 2px;
   }
 
   .junk-header-right {
