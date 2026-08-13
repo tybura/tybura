@@ -49,7 +49,7 @@ export default async function handler(req, res) {
     console.error(err);
     await reply(msg, `⚠️ Failed: ${err.message}`).catch(() => {});
   }
-  return res.status(200).json({ ok: true, classifyDebug });
+  return res.status(200).json({ ok: true });
 }
 
 async function handlePhoto(msg) {
@@ -157,29 +157,34 @@ async function tgJson(url, body) {
 
 const CATEGORIES = ["sticker", "sign", "print", "patch", "vehicle", "container", "tool", "keepsake", "gear", "misc"];
 
-let classifyDebug = null; // temporary diagnostics surfaced in the webhook response
-
 // Auto-categorize the cutout with a vision model (official Replicate model,
 // billed to the same token). Any failure falls back to "misc" — publishing
 // must never block on classification.
 async function classify(thumbBuffer) {
   try {
-    const resp = await fetch(`https://api.replicate.com/v1/models/anthropic/claude-3.7-sonnet/predictions`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${process.env.REPLICATE_API_TOKEN}`,
-        "content-type": "application/json",
-        Prefer: "wait=30",
-      },
-      body: JSON.stringify({
-        input: {
-          image: `data:image/webp;base64,${thumbBuffer.toString("base64")}`,
-          prompt: `Classify the object in this photo into exactly one of these categories: ${CATEGORIES.join(", ")}. Reply with only the single category word, nothing else.`,
-          max_tokens: 8,
+    let resp, prediction;
+    // Accounts under $5 Replicate credit are throttled to burst=1 — the
+    // background-removal call right before us consumes it, so wait and retry.
+    for (let attempt = 0; attempt < 4; attempt++) {
+      resp = await fetch(`https://api.replicate.com/v1/models/anthropic/claude-3.7-sonnet/predictions`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${process.env.REPLICATE_API_TOKEN}`,
+          "content-type": "application/json",
+          Prefer: "wait=30",
         },
-      }),
-    });
-    let prediction = await resp.json();
+        body: JSON.stringify({
+          input: {
+            image: `data:image/webp;base64,${thumbBuffer.toString("base64")}`,
+            prompt: `Classify the object in this photo into exactly one of these categories: ${CATEGORIES.join(", ")}. Reply with only the single category word, nothing else.`,
+            max_tokens: 8,
+          },
+        }),
+      });
+      prediction = await resp.json();
+      if (resp.status !== 429) break;
+      await new Promise((r) => setTimeout(r, 11000));
+    }
     for (let i = 0; i < 10 && ["starting", "processing"].includes(prediction.status); i++) {
       await new Promise((r) => setTimeout(r, 1500));
       const poll = await fetch(prediction.urls.get, {
@@ -192,12 +197,11 @@ async function classify(thumbBuffer) {
       .toLowerCase()
       .replace(/[^a-z]/g, "");
     if (!CATEGORIES.includes(word)) {
-      classifyDebug = `status=${prediction.status} httpStatus=${resp.status} detail=${prediction.detail || ""} error=${prediction.error || ""} output=${JSON.stringify(prediction.output)?.slice(0, 200)}`;
+      console.warn(`classify unexpected: status=${prediction.status} http=${resp.status} detail=${prediction.detail || ""} output=${JSON.stringify(prediction.output)?.slice(0, 200)}`);
       return "misc";
     }
     return word;
   } catch (err) {
-    classifyDebug = `exception: ${err.message}`;
     console.warn("classify failed:", err.message);
     return "misc";
   }
