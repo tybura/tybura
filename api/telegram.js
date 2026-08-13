@@ -170,7 +170,7 @@ async function classify(thumbBuffer) {
     // Accounts under $5 Replicate credit are throttled to burst=1 — the
     // background-removal call right before us consumes it, so wait and retry.
     for (let attempt = 0; attempt < 4; attempt++) {
-      resp = await fetch(`https://api.replicate.com/v1/models/anthropic/claude-3.7-sonnet/predictions`, {
+      resp = await fetch(`https://api.replicate.com/v1/models/anthropic/claude-4.5-haiku/predictions`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${process.env.REPLICATE_API_TOKEN}`,
