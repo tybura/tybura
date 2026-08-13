@@ -79,6 +79,7 @@ async function handlePhoto(msg) {
 
   const { dominant } = await sharp(image).stats();
   const color = `#${[dominant.r, dominant.g, dominant.b].map((c) => c.toString(16).padStart(2, "0")).join("")}`;
+  const category = await classify(thumb);
 
   const meta = {
     title,
@@ -88,6 +89,7 @@ async function handlePhoto(msg) {
     width: info.width,
     height: info.height,
     color,
+    category,
   };
 
   await commit(
@@ -102,7 +104,7 @@ async function handlePhoto(msg) {
   await sendPhoto(
     msg.chat.id,
     thumb,
-    `✅ ${title || "Untitled"}\nslug: ${slug}\nLive in ~2 min → https://tybura.com/junk\n(reply /delete to this message to remove)`
+    `✅ ${title || "Untitled"} · ${category}\nslug: ${slug}\nLive in ~2 min → https://tybura.com/junk\n(reply /delete to this message to remove)`
   );
 }
 
@@ -152,6 +154,47 @@ async function tgJson(url, body) {
 }
 
 // --- Replicate ---
+
+const CATEGORIES = ["sticker", "sign", "print", "patch", "vehicle", "container", "tool", "keepsake", "gear", "misc"];
+
+// Auto-categorize the cutout with a vision model (official Replicate model,
+// billed to the same token). Any failure falls back to "misc" — publishing
+// must never block on classification.
+async function classify(thumbBuffer) {
+  try {
+    const resp = await fetch(`https://api.replicate.com/v1/models/anthropic/claude-3.7-sonnet/predictions`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.REPLICATE_API_TOKEN}`,
+        "content-type": "application/json",
+        Prefer: "wait=30",
+      },
+      body: JSON.stringify({
+        input: {
+          image: `data:image/webp;base64,${thumbBuffer.toString("base64")}`,
+          prompt: `Classify the object in this photo into exactly one of these categories: ${CATEGORIES.join(", ")}. Reply with only the single category word, nothing else.`,
+          max_tokens: 8,
+        },
+      }),
+    });
+    let prediction = await resp.json();
+    for (let i = 0; i < 10 && ["starting", "processing"].includes(prediction.status); i++) {
+      await new Promise((r) => setTimeout(r, 1500));
+      const poll = await fetch(prediction.urls.get, {
+        headers: { Authorization: `Bearer ${process.env.REPLICATE_API_TOKEN}` },
+      });
+      prediction = await poll.json();
+    }
+    const word = (Array.isArray(prediction.output) ? prediction.output.join("") : String(prediction.output || ""))
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z]/g, "");
+    return CATEGORIES.includes(word) ? word : "misc";
+  } catch (err) {
+    console.warn("classify failed:", err.message);
+    return "misc";
+  }
+}
 
 async function removeBackground(buffer) {
   const dataUri = `data:image/jpeg;base64,${buffer.toString("base64")}`;

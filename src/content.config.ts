@@ -27,6 +27,7 @@ const junk = defineCollection({
     width: z.number(),
     height: z.number(),
     color: z.string().optional(), // dominant color, #rrggbb
+    category: z.string().optional(), // auto-detected at ingest
   }),
 });
 
