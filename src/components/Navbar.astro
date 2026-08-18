@@ -159,6 +159,10 @@ const junkCount = (await getCollection("junk")).length;
     font-size: 9px;
     line-height: 1;
     letter-spacing: 0;
+    /* keep the superscript out of the line box so nav items share a baseline */
+    vertical-align: baseline;
+    position: relative;
+    top: -0.45em;
   }
 
   /* ---- button reset ---- */
