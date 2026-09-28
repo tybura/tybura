@@ -11,7 +11,7 @@ const socialLinks = [
 const storyCol1 = [
   `Born in 1997, central Poland, Europe. I wasn't the most extroverted kid on the block. Chronically online, wasting my days in Los Santos, grinding MMORPGs.`,
   `Due to my automotive bloodline - I grew up hanging around auto shops with my old man, that's where I fell in love with cars. Especially American ones.`,
-  `Somehow, against all odds, I stumbled into graphic design and ended up as a Bachelor of Arts. That got me into Uniforma Studio. A place that taught me the craft of digital design for real. From there, I pivoted multiple times – UI design, product design, web design, no-code builds, AI-development.`,
+  `Somehow, against all odds, I stumbled into graphic design and ended up as a Bachelor of Arts. That got me into <a href="https://uniforma.pl">Uniforma Studio</a>. A place that taught me the craft of digital design for real. From there, I pivoted multiple times – UI design, product design, web design, no-code builds, AI-development.`,
   `Eventually, I landed at tonik.com. Started as a Webflow developer, bounced between design and code, two years later I became Head of Web Design. In almost two years I scaled the web design team from 3 to 16 talented designers and spent countless hours scoping, selling, building, designing, deploying, and strategically optimizing the whole company.`,
   `99% of my work is done for US startups – the founders backed by YCombinator, a16z, Sequoia, hf0 - the most demanding, challenging, rewarding, high velocity environment I've ever experienced.`,
 ];
@@ -63,7 +63,7 @@ const storyCol2 = [
       {
         storyCol1.map((text, i) => (
           <>
-            <p>{text}</p>
+            <p set:html={text} />
             {i < storyCol1.length - 1 && <div class="bio-spacer" />}
           </>
         ))
@@ -77,7 +77,7 @@ const storyCol2 = [
       {
         storyCol2.map((text, i) => (
           <>
-            <p>{text}</p>
+            <p set:html={text} />
             {i < storyCol2.length - 1 && <div class="bio-spacer" />}
           </>
         ))
