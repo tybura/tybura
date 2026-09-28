@@ -7,6 +7,13 @@ projects:
     status: LIVE
     url: https://unsound.pl
 
+  - name: Dziwne Wody
+    type: E-commerce
+    location: Poland
+    year: "2026"
+    status: LIVE
+    url: https://www.dziwnewody.xyz
+
   - name: Hammock
     type: HealthTech
     location: United States
