@@ -1,0 +1,450 @@
+---
+// TYBURATEXT: tybura.com as a teletext service, served at /teletext.
+import { getCollection } from "astro:content";
+import { CONTENT_ROWS, rowHTML, rowsHTML } from "../teletext/engine";
+import { PAGES, fastextRow, headerRow, promos, type Ctx } from "../teletext/pages";
+
+const projects = (await getCollection("projects"))[0]?.data.projects ?? [];
+const junkAll = (await getCollection("junk")).sort(
+  (a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime()
+);
+const pad = (n: number) => String(n).padStart(2, "0");
+const fmt = (iso: string) => {
+  const d = new Date(iso);
+  return `${pad(d.getUTCDate())}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCFullYear() % 100)}`;
+};
+
+const data = {
+  projects,
+  junk: junkAll.slice(0, 48).map((j) => ({ id: j.id, t: j.data.title, d: fmt(j.data.date), c: j.data.category })),
+  junkCount: junkAll.length,
+  updated: new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }),
+};
+const ctx: Ctx = { ...data, music: { state: "loading", tracks: [] }, photos: {} };
+
+const header = rowHTML(headerRow({ p: "P100", counter: "100", date: new Date() }), 0);
+const body = rowsHTML(PAGES[100].render(ctx)[0], CONTENT_ROWS, 1);
+const promo = rowHTML(promos(ctx)[0], 23);
+const fast = rowHTML(fastextRow(PAGES[100].fast), 24);
+const json = JSON.stringify(data).replace(/</g, "\\u003c");
+
+const digits = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"];
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="robots" content="noindex" />
+    <meta
+      name="description"
+      content="Emil Tybura is an award-winning designer, storyteller, leader. Over 9 years of experience in transforming brands, websites and startups."
+    />
+    <link rel="icon" type="image/png" href="/tybura-favicon-new.png" />
+    <link rel="preload" href="/fonts/teletext/tybtext-wide.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/teletext/tybtext.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/teletext/tybtext-narrow.woff2" as="font" type="font/woff2" crossorigin />
+    <title>100 Index · TYBURATEXT</title>
+    <script defer src="https://cloud.umami.is/script.js" data-website-id="624012a1-ebf7-4ac3-ad93-852f63cc5402"></script>
+    <script is:inline async src="https://www.googletagmanager.com/gtag/js?id=G-7KGSVQG4D8"></script>
+    <script is:inline>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-7KGSVQG4D8');
+    </script>
+  </head>
+  <body>
+    <div id="tt" class="tt crt" data-mode="wide" data-adv="0.8">
+      <main class="screen" aria-label="TYBURATEXT teletext service">
+        <div class="hdr" set:html={header} />
+        <div class="body" aria-live="polite" set:html={body} />
+        <div class="promo" set:html={promo} />
+        <div class="fast" set:html={fast} />
+      </main>
+
+      <nav class="remote" aria-label="Remote control">
+        <div class="remote-brand">TYBURATEXT</div>
+        <div class="remote-digits">
+          {digits.map((d) => <button data-key={d} aria-label={`Digit ${d}`}>{d}</button>)}
+        </div>
+        <div class="remote-fast">
+          <button data-key="red" class="k-red" aria-label="Red fastext link"></button>
+          <button data-key="green" class="k-green" aria-label="Green fastext link"></button>
+          <button data-key="yellow" class="k-yellow" aria-label="Yellow fastext link"></button>
+          <button data-key="cyan" class="k-cyan" aria-label="Cyan fastext link"></button>
+        </div>
+        <div class="remote-fn">
+          <button data-key="left" aria-label="Previous subpage">◀</button>
+          <button data-key="right" aria-label="Next subpage">▶</button>
+          <button data-key="reveal" aria-label="Reveal hidden text">?</button>
+          <button data-key="hold" aria-label="Hold page" class="k-hold">HOLD</button>
+          <button data-key="index" aria-label="Index page 100">100</button>
+          <button data-key="crt" aria-label="Toggle CRT effect">CRT</button>
+        </div>
+        <div class="remote-hint">0-9 page · ← → sub<br />? reveal · H hold</div>
+      </nav>
+    </div>
+
+    <noscript><style>.tt .screen { visibility: visible !important; } .remote { display: none !important; }</style></noscript>
+    <script is:inline type="application/json" id="tt-data" set:html={json} />
+    <script>
+      import { boot } from "../teletext/client";
+      boot();
+    </script>
+
+    <style is:global>
+      @font-face {
+        font-family: "TybText";
+        src: url("/fonts/teletext/tybtext.woff2") format("woff2");
+        font-display: block;
+      }
+      @font-face {
+        font-family: "TybText Wide";
+        src: url("/fonts/teletext/tybtext-wide.woff2") format("woff2");
+        font-display: block;
+      }
+      @font-face {
+        font-family: "TybText Narrow";
+        src: url("/fonts/teletext/tybtext-narrow.woff2") format("woff2");
+        font-display: block;
+      }
+
+      :root {
+        --k: #000;
+        --r: #f00;
+        --g: #0f0;
+        --y: #ff0;
+        --b: #00f;
+        --m: #f0f;
+        --c: #0ff;
+        --w: #fff;
+        --room: #14130f;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html,
+      body {
+        height: 100%;
+        background: var(--room);
+        overflow: hidden;
+        -webkit-text-size-adjust: 100%;
+      }
+
+      /* ------------------------------------------------------------ layout */
+
+      .tt {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 28px;
+        padding: 28px;
+      }
+
+      .tt[data-mode="narrow"] {
+        flex-direction: column;
+        justify-content: center;
+        gap: 12px;
+        padding: max(10px, env(safe-area-inset-top)) 10px 10px;
+      }
+
+      /* ------------------------------------------------------------ screen */
+
+      .screen {
+        position: relative;
+        flex: none;
+        font-family: "TybText", monospace;
+        font-size: var(--fs, 20px);
+        line-height: 1;
+        padding: var(--py, 10px) var(--px, 10px);
+        background: var(--k);
+        color: var(--w);
+        border-radius: calc(var(--fs, 20px) * 0.9);
+        box-shadow:
+          0 0 0 1px #000,
+          0 0 0 calc(var(--fs, 20px) * 0.35) #0b0b09,
+          0 30px 80px rgba(0, 0, 0, 0.6);
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+        font-kerning: none;
+        font-variant-ligatures: none;
+      }
+
+      .tt[data-adv="0.8"] .screen {
+        font-family: "TybText Wide", monospace;
+      }
+      .tt[data-adv="0.45"] .screen {
+        font-family: "TybText Narrow", monospace;
+      }
+
+      .tt[data-mode="narrow"] .screen {
+        border-radius: calc(var(--fs, 20px) * 0.5);
+        box-shadow: none;
+      }
+
+      .hdr,
+      .body,
+      .promo,
+      .fast {
+        width: calc(40em * var(--adv, 0.8));
+      }
+
+      .r {
+        display: block;
+        height: 1em;
+        white-space: pre;
+        overflow: hidden;
+        color: inherit;
+        text-decoration: none;
+      }
+
+      .r.dh {
+        height: 2em;
+      }
+
+      .dhi {
+        display: inline-block;
+        height: 1em;
+        transform: scaleY(2);
+        transform-origin: 0 0;
+      }
+
+      .fk { color: var(--k); }
+      .fr { color: var(--r); }
+      .fg { color: var(--g); }
+      .fy { color: var(--y); }
+      .fb { color: var(--b); }
+      .fm { color: var(--m); }
+      .fc { color: var(--c); }
+      .fw { color: var(--w); }
+      .bk { background: var(--k); }
+      .br { background: var(--r); }
+      .bg { background: var(--g); }
+      .by { background: var(--y); }
+      .bb { background: var(--b); }
+      .bm { background: var(--m); }
+      .bc { background: var(--c); }
+      .bw { background: var(--w); }
+
+      :where(.screen a) {
+        color: inherit;
+        text-decoration: none;
+        cursor: pointer;
+        outline: none;
+      }
+
+      /* cursor bar: a link lights up as black on white */
+      .screen a.r:hover,
+      .screen a.r:focus-visible,
+      .screen a:not(.r):hover,
+      .screen a:not(.r):focus-visible {
+        background: var(--w) !important;
+      }
+      .screen a.r:hover span,
+      .screen a.r:focus-visible span,
+      .screen a:not(.r):hover,
+      .screen a:not(.r):focus-visible {
+        color: var(--k) !important;
+        background: transparent !important;
+        animation: none !important;
+      }
+
+      .fl {
+        animation: flash 1s step-end infinite;
+      }
+      @keyframes flash {
+        75% {
+          color: transparent;
+        }
+      }
+
+      .screen:not(.reveal) .cc {
+        color: transparent !important;
+      }
+
+      /* --------------------------------------------------------------- CRT */
+
+      .crt .screen {
+        text-shadow: 0 0 calc(var(--fs) * 0.18) color-mix(in srgb, currentColor 45%, transparent);
+      }
+      .crt .screen::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        /* one dark scanline per font pixel row, so it never beats against the glyphs */
+        background:
+          radial-gradient(ellipse at center, transparent 60%, rgba(0, 0, 0, 0.45) 100%),
+          linear-gradient(to bottom, rgba(0, 0, 0, 0) 60%, rgba(0, 0, 0, 0.16) 60%) 0 var(--py) / 100% calc(var(--fs) / 10);
+      }
+      .crt .screen::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 1;
+        background: linear-gradient(to bottom, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0) 40%);
+      }
+
+      /* ------------------------------------------------------------ remote */
+
+      .remote {
+        flex: none;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 14px;
+        width: 148px;
+        padding: 22px 16px 18px;
+        border-radius: 40px 40px 34px 34px;
+        background: linear-gradient(180deg, #2b2a26 0%, #1d1c19 100%);
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.08),
+          inset 0 -2px 0 rgba(0, 0, 0, 0.4),
+          0 24px 60px rgba(0, 0, 0, 0.55);
+        font-family: "TybText", monospace;
+        color: #c6c0aa;
+        user-select: none;
+        -webkit-user-select: none;
+      }
+
+      .remote button {
+        appearance: none;
+        border: 0;
+        font: inherit;
+        font-size: 15px;
+        line-height: 1;
+        color: #e9e4d2;
+        background: #3a3934;
+        border-radius: 10px;
+        height: 30px;
+        cursor: pointer;
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.1),
+          0 2px 0 #121110;
+        transition: transform 0.06s ease, box-shadow 0.06s ease;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .remote button:active,
+      .remote button.is-down {
+        transform: translateY(2px);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 0 0 #121110;
+      }
+      .remote button:focus-visible {
+        outline: 2px solid var(--y);
+        outline-offset: 2px;
+      }
+
+      .remote-brand {
+        font-size: 10px;
+        letter-spacing: 0.08em;
+        opacity: 0.7;
+      }
+
+      .remote-digits {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        width: 100%;
+      }
+      .remote-digits button {
+        border-radius: 50%;
+        height: auto;
+        aspect-ratio: 1;
+      }
+      .remote-digits button:last-child {
+        grid-column: 2;
+      }
+
+      .remote-fast {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 6px;
+        width: 100%;
+      }
+      .remote-fast button {
+        height: 14px;
+        border-radius: 7px;
+      }
+      .remote .k-red { background: #e0322a; }
+      .remote .k-green { background: #3cc23c; }
+      .remote .k-yellow { background: #f2d22a; }
+      .remote .k-cyan { background: #2ab7e0; }
+
+      .remote-fn {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+        width: 100%;
+      }
+      .remote-fn button {
+        font-size: 12px;
+      }
+      .is-hold .remote .k-hold {
+        color: #ff4a3d;
+      }
+      .tt:not(.crt) .remote [data-key="crt"] {
+        opacity: 0.55;
+      }
+
+      .remote-hint {
+        font-size: 9px;
+        line-height: 1.5;
+        text-align: center;
+        opacity: 0.5;
+      }
+
+      .tt[data-mode="narrow"] .remote {
+        width: 100%;
+        max-width: 520px;
+        padding: 12px;
+        gap: 10px;
+        border-radius: 20px;
+      }
+      .tt[data-mode="narrow"] .remote-brand,
+      .tt[data-mode="narrow"] .remote-hint {
+        display: none;
+      }
+      .tt[data-mode="narrow"] .remote-digits {
+        grid-template-columns: repeat(10, 1fr);
+        gap: 5px;
+      }
+      .tt[data-mode="narrow"] .remote-digits button {
+        border-radius: 8px;
+        aspect-ratio: auto;
+        height: 36px;
+      }
+      .tt[data-mode="narrow"] .remote-digits button:last-child {
+        grid-column: auto;
+      }
+      .tt[data-mode="narrow"] .remote-fn {
+        grid-template-columns: repeat(6, 1fr);
+        gap: 5px;
+      }
+      .tt[data-mode="narrow"] .remote-fn button {
+        height: 36px;
+      }
+
+      .tt:not(.is-ready) .screen {
+        visibility: hidden;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .fl {
+          animation: none;
+        }
+      }
+    </style>
+  </body>
+</html>
